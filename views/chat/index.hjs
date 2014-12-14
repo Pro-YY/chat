@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
+    <p>by jquery</p>
+
+    <ul id="messages"></ul>
+    <input id="textName" type=text placeholder="enter your name">
+    <input id="textMessage" type=text placeholder="press enter to send">
+  </body>
+
+  <script type='text/javascript' src='/javascripts/jquery.min.js'></script>
+  <script type='text/javascript' src='/socket.io/socket.io.js'></script>
+  <script type='text/javascript'>
+
+$(function() {
+  // connect namespace
+  var socket = io.connect('/chat');
+  // echo test
+  socket.on('echo-ack', function(data) {
+    console.log(data);
+  });
+  var message = 'Hello, Socket.io!';
+  socket.emit('echo', message);
+
+  // send
+  $('#textMessage').keyup(function(event) {
+    if(event.keyCode === 13) sendMsg();
+  });
+  var sendMsg = function() {
+    var name = $('#textName').val();
+    var data = $('#textMessage').val();
+    if (data === '') {
+      alert('cannot send null message');
+      return;
+    }
+    socket.emit('message', {name: name, data: data});
+    $('#textMessage').val('');
+  };
+  // recv
+  socket.on('message', function(msg) {
+    recvMsg(msg);
+  });
+  var recvMsg = function(msg) {
+    console.log(msg);
+    $('#messages').append($('<li>').text(msg.name + '(' + msg.ip + ') at ' + new Date(msg.time).toLocaleTimeString() + ' said: ' + msg.data));
+  };
+});
+
+  </script>
+</html>
