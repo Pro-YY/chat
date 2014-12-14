@@ -1,9 +1,12 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
-router.get('/', function(req, res) {
-  res.render('chat/index', { title: 'Chat' });
+router.get('/jq', function(req, res) {
+  res.render('chat/index', { title: 'Chat by jquery' });
+});
+
+router.get('/ng', function(req, res) {
+  res.render('chat/index-tpl', { title: 'Chat by angular' });
 });
 
 module.exports = router;

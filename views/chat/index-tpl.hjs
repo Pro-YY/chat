@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html ng-app="chat">
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
+    <p>by angular</p>
+
+    <div ng-controller="ChatCtrl">
+      <ul>
+        <li ng-repeat="message in messages">
+          [[message.name]]([[message.ip]]) at [[message.time]] said: [[message.data]]
+        </li>
+      </ul>
+      <input ng-model="name" type=text placeholder="enter your name">
+      <input ng-model="message" ng-enter="send()" type=text placeholder="press enter to send">
+      <button ng-click="send()">send</button>
+    </div>
+  </body>
+
+  <script type='text/javascript' src='/javascripts/jquery.min.js'></script>
+  <script type='text/javascript' src='/javascripts/angular.min.js'></script>
+  <script type='text/javascript' src='/socket.io/socket.io.js'></script>
+  <script type='text/javascript'>
+
+
+angular.module('chat', [])
+  .config(function($interpolateProvider) {
+    $interpolateProvider.startSymbol('[[');
+    $interpolateProvider.endSymbol(']]');
+  })
+  .factory('socket', function($rootScope) {
+    var socket = io.connect('/chat');
+    return {
+      on: function(eventName, callback) {
+        socket.on(eventName, function() {
+          var args = arguments;
+          $rootScope.$apply(function() {
+            callback.apply(socket, args);
+          });
+        });
+      },
+      emit: function(eventName, data, callback) {
+        socket.emit(eventName, data, function() {
+          var args = arguments;
+          $rootScope.$apply(function() {
+            if (callback) {
+              callback.apply(socket, args);
+            }
+          });
+        });
+      }
+    };
+  })
+  .directive('ngEnter', function() {
+    return function (scope, element, attrs) {
+      element.bind('keydown keypress', function(event) {
+        if(event.which === 13) {
+          scope.$apply(function() {
+            scope.$eval(attrs.ngEnter);
+          });
+          event.preventDefault();
+        }
+      });
+    };
+  })
+  .controller('ChatCtrl', ['$scope', '$log', 'socket', function($scope, $log, socket) {
+    $scope.messages = [];
+    socket.on('message', function(data) {
+      var message = data;
+      message.time = new Date(message.time).toLocaleTimeString();
+      $scope.messages.push(message);
+    });
+    $scope.send = function() {
+      if (!$scope.message || $scope.message === '') {
+        alert('cannot send null message');
+        return;
+      }
+      socket.emit('message', {name: $scope.name, data: $scope.message});
+      $scope.message = '';
+    };
+  }]);
+
+  </script>
+</html>
