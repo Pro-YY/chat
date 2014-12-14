@@ -15,18 +15,19 @@
         </li>
       </ul>
       <input ng-model="name" type=text placeholder="enter your name">
-      <input ng-model="message" ng-enter="send()" type=text placeholder="press enter to send">
+      <input ng-model="message" ui-keypress="{'enter': 'enterSend($event)'}" type=text placeholder="press enter to send">
       <button ng-click="send()">send</button>
     </div>
   </body>
 
   <script type='text/javascript' src='/javascripts/jquery.min.js'></script>
   <script type='text/javascript' src='/javascripts/angular.min.js'></script>
+  <script type='text/javascript' src='/javascripts/ui-utils.min.js'></script>
   <script type='text/javascript' src='/socket.io/socket.io.js'></script>
   <script type='text/javascript'>
 
 
-angular.module('chat', [])
+angular.module('chat', ['ui.utils'])
   .config(function($interpolateProvider) {
     $interpolateProvider.startSymbol('[[');
     $interpolateProvider.endSymbol(']]');
@@ -54,18 +55,6 @@ angular.module('chat', [])
       }
     };
   })
-  .directive('ngEnter', function() {
-    return function (scope, element, attrs) {
-      element.bind('keydown keypress', function(event) {
-        if(event.which === 13) {
-          scope.$apply(function() {
-            scope.$eval(attrs.ngEnter);
-          });
-          event.preventDefault();
-        }
-      });
-    };
-  })
   .controller('ChatCtrl', ['$scope', '$log', 'socket', function($scope, $log, socket) {
     $scope.messages = [];
     socket.on('message', function(data) {
@@ -80,6 +69,10 @@ angular.module('chat', [])
       }
       socket.emit('message', {name: $scope.name, data: $scope.message});
       $scope.message = '';
+    };
+    $scope.enterSend = function($event) {
+      $scope.send();
+      $event.preventDefault();
     };
   }]);
 
